@@ -2,5 +2,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)node_modules'"
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)node_modules'",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
