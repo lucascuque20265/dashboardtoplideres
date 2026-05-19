@@ -7,48 +7,85 @@
  import { Candidate, Program } from '@/types';
  import { useData } from '@/context/DataContext';
 
- // ── Dados base brasileiros ──────────────────────────────────────────
- const BR_STATES = [
-   'AC','AL','AM','AP','BA','CE','DF','ES','GO','MA',
-   'MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN',
-   'RO','RR','RS','SC','SE','SP','TO',
- ];
+ // ── Dados brasileiros ─────────────────────────────────────────────
+ const STATE_NAME_TO_UF: Record<string, string> = {
+   'Acre': 'AC', 'Alagoas': 'AL', 'Amazonas': 'AM', 'Amapá': 'AP',
+   'Bahia': 'BA', 'Ceará': 'CE', 'Distrito Federal': 'DF', 'Espírito Santo': 'ES',
+   'Goiás': 'GO', 'Maranhão': 'MA', 'Minas Gerais': 'MG', 'Mato Grosso do Sul': 'MS',
+   'Mato Grosso': 'MT', 'Pará': 'PA', 'Paraíba': 'PB', 'Pernambuco': 'PE',
+   'Piauí': 'PI', 'Paraná': 'PR', 'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN',
+   'Rondônia': 'RO', 'Roraima': 'RR', 'Rio Grande do Sul': 'RS', 'Santa Catarina': 'SC',
+   'Sergipe': 'SE', 'São Paulo': 'SP', 'Tocantins': 'TO',
+ };
 
- const BASE_CITY_STATE: Record<string, string> = {
-   'Blumenau': 'SC', 'Carapicuiba': 'SP', 'Cotia': 'SP', 'Fortaleza': 'CE',
-   'Goiania': 'GO', 'Gravataí': 'RS', 'Guarujá': 'SP', 'Jacareí': 'SP',
-   'Jaú': 'SP', 'João Pessoa': 'PB', 'Juiz de Fora': 'MG', 'Jundiaí': 'SP',
-   'Macapá': 'AP', 'Mogi das Cruzes': 'SP', 'Palhoça': 'SC', 'Praia Grande': 'SP',
-   'Sapiranga': 'RS', 'Sertãozinho': 'SP', 'São Paulo': 'SP',
-   'São Vicente': 'SP', 'Vitória': 'ES',
+ const UF_TO_STATE_NAME: Record<string, string> = Object.fromEntries(
+   Object.entries(STATE_NAME_TO_UF).map(([name, uf]) => [uf, name])
+ );
+
+ const STATE_NAMES = Object.keys(STATE_NAME_TO_UF).sort((a, b) =>
+   a.localeCompare(b, 'pt-BR')
+ );
+
+ const BASE_CITIES_BY_UF: Record<string, string[]> = {
+   AC: ['Rio Branco', 'Cruzeiro do Sul'],
+   AL: ['Maceió', 'Arapiraca'],
+   AM: ['Manaus', 'Parintins'],
+   AP: ['Macapá', 'Santana'],
+   BA: ['Salvador', 'Feira de Santana', 'Vitória da Conquista', 'Camaçari'],
+   CE: ['Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Maracanaú', 'Sobral'],
+   DF: ['Brasília', 'Ceilândia', 'Taguatinga'],
+   ES: ['Vitória', 'Vila Velha', 'Cariacica', 'Serra'],
+   GO: ['Goiânia', 'Aparecida de Goiânia', 'Anápolis', 'Rio Verde'],
+   MA: ['São Luís', 'Imperatriz', 'Timon'],
+   MG: ['Belo Horizonte', 'Uberlândia', 'Contagem', 'Betim', 'Juiz de Fora', 'Montes Claros'],
+   MS: ['Campo Grande', 'Dourados', 'Três Lagoas'],
+   MT: ['Cuiabá', 'Várzea Grande', 'Rondonópolis'],
+   PA: ['Belém', 'Ananindeua', 'Santarém', 'Marabá'],
+   PB: ['João Pessoa', 'Campina Grande', 'Santa Rita'],
+   PE: ['Recife', 'Caruaru', 'Olinda', 'Petrolina'],
+   PI: ['Teresina', 'Parnaíba'],
+   PR: ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Foz do Iguaçu', 'Cascavel'],
+   RJ: ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói'],
+   RN: ['Natal', 'Mossoró', 'Parnamirim'],
+   RO: ['Porto Velho', 'Ji-Paraná'],
+   RR: ['Boa Vista'],
+   RS: ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Canoas', 'Gravataí', 'Sapiranga', 'Novo Hamburgo'],
+   SC: ['Florianópolis', 'Joinville', 'Blumenau', 'Palhoça', 'Chapecó', 'Itajaí'],
+   SE: ['Aracaju', 'Nossa Senhora do Socorro'],
+   SP: ['São Paulo', 'Campinas', 'Guarulhos', 'Santos', 'Ribeirão Preto', 'Sorocaba', 'São José dos Campos',
+       'Osasco', 'Carapicuíba', 'Cotia', 'Guarujá', 'Jacareí', 'Jaú', 'Jundiaí', 'Mogi das Cruzes',
+       'Praia Grande', 'Sertãozinho', 'São Vicente', 'Bauru', 'Santo André', 'Piracicaba'],
+   TO: ['Palmas', 'Araguaína'],
  };
 
  // ── Componente de input com sugestões ──────────────────────────────
  function AutocompleteInput({
-   id, value, onChange, options, placeholder, maxLength, required, uppercase,
+   id, value, onChange, options, placeholder, required, disabled,
  }: {
    id: string;
    value: string;
    onChange: (v: string) => void;
    options: string[];
    placeholder?: string;
-   maxLength?: number;
    required?: boolean;
-   uppercase?: boolean;
+   disabled?: boolean;
  }) {
    const [open, setOpen] = useState(false);
    const ref = useRef<HTMLDivElement>(null);
 
-   const filtered = value.trim().length > 0
-     ? options.filter(o => o.toLowerCase().startsWith(value.toLowerCase()) && o.toLowerCase() !== value.toLowerCase())
-     : [];
+   const filtered = useMemo(() => {
+     if (disabled) return [];
+     const q = value.trim().toLowerCase();
+     if (!q) return options.slice(0, 10);
+     return options.filter(o => o.toLowerCase().includes(q) && o.toLowerCase() !== q);
+   }, [value, options, disabled]);
 
    useEffect(() => {
-     function handleClick(e: MouseEvent) {
+     function onMouseDown(e: MouseEvent) {
        if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
      }
-     document.addEventListener('mousedown', handleClick);
-     return () => document.removeEventListener('mousedown', handleClick);
+     document.addEventListener('mousedown', onMouseDown);
+     return () => document.removeEventListener('mousedown', onMouseDown);
    }, []);
 
    return (
@@ -56,20 +93,16 @@
        <Input
          id={id}
          value={value}
-         onChange={(e) => {
-           const v = uppercase ? e.target.value.toUpperCase() : e.target.value;
-           onChange(v);
-           setOpen(true);
-         }}
-         onFocus={() => setOpen(true)}
+         onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+         onFocus={() => !disabled && setOpen(true)}
          placeholder={placeholder}
-         maxLength={maxLength}
          required={required}
+         disabled={disabled}
          autoComplete="off"
        />
        {open && filtered.length > 0 && (
-         <ul className="absolute z-50 w-full mt-1 rounded-md border bg-popover text-popover-foreground shadow-md max-h-48 overflow-y-auto text-sm">
-           {filtered.slice(0, 8).map(option => (
+         <ul className="absolute z-50 w-full mt-1 rounded-md border bg-popover text-popover-foreground shadow-md max-h-52 overflow-y-auto text-sm">
+           {filtered.map(option => (
              <li
                key={option}
                className="px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground select-none"
@@ -98,9 +131,10 @@
    const [formData, setFormData] = useState({
      name: '',
      city: '',
-     state: '',
+     state: '', // armazena UF (ex: "SP")
      programs: [] as Program[],
    });
+   const [stateDisplay, setStateDisplay] = useState('');
 
    useEffect(() => {
      if (candidate) {
@@ -110,30 +144,27 @@
          state: candidate.state,
          programs: candidate.programs,
        });
+       setStateDisplay(UF_TO_STATE_NAME[candidate.state] || candidate.state);
      } else {
        setFormData({ name: '', city: '', state: '', programs: [] });
+       setStateDisplay('');
      }
    }, [candidate, open]);
 
-   // Combina cidades dos candidatos existentes com a lista base
+   // Cidades do estado selecionado
    const citySuggestions = useMemo(() => {
-     const set = new Set([
-       ...Object.keys(BASE_CITY_STATE),
-       ...candidates.map(c => c.city).filter(Boolean),
-     ]);
+     const uf = formData.state;
+     if (!uf) return [];
+     const base = BASE_CITIES_BY_UF[uf] || [];
+     const fromDb = candidates.filter(c => c.state === uf && c.city).map(c => c.city);
+     const set = new Set([...base, ...fromDb]);
      return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-   }, [candidates]);
+   }, [formData.state, candidates]);
 
-   // Mapa cidade → estado (existentes + base)
-   const cityStateMap = useMemo(() => {
-     const map: Record<string, string> = { ...BASE_CITY_STATE };
-     candidates.forEach(c => { if (c.city && c.state) map[c.city] = c.state; });
-     return map;
-   }, [candidates]);
-
-   const handleCityChange = (city: string) => {
-     const autoState = cityStateMap[city];
-     setFormData(prev => ({ ...prev, city, state: autoState ?? prev.state }));
+   const handleStateChange = (name: string) => {
+     setStateDisplay(name);
+     const uf = STATE_NAME_TO_UF[name] ?? '';
+     setFormData(prev => ({ ...prev, state: uf, city: '' }));
    };
 
    const handleSubmit = (e: React.FormEvent) => {
@@ -172,31 +203,33 @@
                  required
                />
              </div>
-             <div className="grid grid-cols-2 gap-4">
-               <div className="space-y-2">
-                 <Label htmlFor="city">Cidade</Label>
-                 <AutocompleteInput
-                   id="city"
-                   value={formData.city}
-                   onChange={handleCityChange}
-                   options={citySuggestions}
-                   placeholder="Digite a cidade"
-                   required
-                 />
-               </div>
-               <div className="space-y-2">
-                 <Label htmlFor="state">Estado</Label>
-                 <AutocompleteInput
-                   id="state"
-                   value={formData.state}
-                   onChange={(v) => setFormData(prev => ({ ...prev, state: v }))}
-                   options={BR_STATES}
-                   placeholder="UF"
-                   maxLength={2}
-                   required
-                   uppercase
-                 />
-               </div>
+             <div className="space-y-2">
+               <Label htmlFor="state">Estado</Label>
+               <AutocompleteInput
+                 id="state"
+                 value={stateDisplay}
+                 onChange={handleStateChange}
+                 options={STATE_NAMES}
+                 placeholder="Digite o nome do estado"
+                 required
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="city">
+                 Cidade
+                 {!formData.state && (
+                   <span className="ml-2 text-xs text-muted-foreground">— selecione o estado primeiro</span>
+                 )}
+               </Label>
+               <AutocompleteInput
+                 id="city"
+                 value={formData.city}
+                 onChange={(city) => setFormData(prev => ({ ...prev, city }))}
+                 options={citySuggestions}
+                 placeholder={formData.state ? 'Digite a cidade' : '—'}
+                 disabled={!formData.state}
+                 required
+               />
              </div>
              <div className="space-y-2">
                <Label>Programas</Label>
