@@ -135,6 +135,7 @@
      programs: [] as Program[],
    });
    const [stateDisplay, setStateDisplay] = useState('');
+   const [stateError, setStateError] = useState(false);
 
    useEffect(() => {
      if (candidate) {
@@ -149,6 +150,7 @@
        setFormData({ name: '', city: '', state: '', programs: [] });
        setStateDisplay('');
      }
+     setStateError(false);
    }, [candidate, open]);
 
    // Cidades do estado selecionado
@@ -165,10 +167,15 @@
      setStateDisplay(name);
      const uf = STATE_NAME_TO_UF[name] ?? '';
      setFormData(prev => ({ ...prev, state: uf, city: '' }));
+     setStateError(name.trim() !== '' && uf === '');
    };
 
    const handleSubmit = (e: React.FormEvent) => {
      e.preventDefault();
+     if (!formData.state) {
+       setStateError(true);
+       return;
+     }
      if (candidate) {
        updateCandidate(candidate.id, formData);
      } else {
@@ -213,6 +220,9 @@
                  placeholder="Digite o nome do estado"
                  required
                />
+               {stateError && (
+                 <p className="text-xs text-destructive">Selecione um estado válido da lista</p>
+               )}
              </div>
              <div className="space-y-2">
                <Label htmlFor="city">

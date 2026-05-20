@@ -28,11 +28,23 @@ export function FilterPanel() {
       if (c.city) citySet.add(c.city);
       if (c.state) stateSet.add(c.state);
     });
+
+    // Se há estados selecionados, mostrar apenas cidades desses estados
+    let filteredCitySet = citySet;
+    if (filters.states.length > 0) {
+      filteredCitySet = new Set<string>();
+      candidates.forEach(c => {
+        if (filters.states.includes(c.state) && c.city) {
+          filteredCitySet.add(c.city);
+        }
+      });
+    }
+
     return {
-      availableCities: Array.from(citySet).sort((a, b) => a.localeCompare(b, 'pt-BR')),
+      availableCities: Array.from(filteredCitySet).sort((a, b) => a.localeCompare(b, 'pt-BR')),
       availableStates: Array.from(stateSet).sort(),
     };
-  }, [candidates]);
+  }, [candidates, filters.states]);
 
   const toggleProgram = (program: Program) => {
     const newPrograms = filters.programs.includes(program)
