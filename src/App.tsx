@@ -2,14 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DataProvider, useData } from "@/context/DataContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import CandidatesList from "./pages/CandidatesList";
 import CandidateDetail from "./pages/CandidateDetail";
 import Kanban from "./pages/Kanban";
-import AuditLog from "./pages/AuditLog";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -37,7 +36,6 @@ const App = () => (
               <Route path="/kanban" element={<Kanban />} />
               <Route path="/candidates" element={<CandidatesList />} />
               <Route path="/candidates/:id" element={<CandidateDetail />} />
-              <Route path="/audit" element={<AuditLog />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
