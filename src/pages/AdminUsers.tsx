@@ -46,7 +46,7 @@ export default function AdminUsers() {
   // Dialog novo usuário
   const [newUserDialog, setNewUserDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [createPassword, setCreatePassword] = useState('');
   const [newUserLoading, setNewUserLoading] = useState(false);
 
   // Dialog alterar senha
@@ -75,12 +75,12 @@ export default function AdminUsers() {
   useEffect(() => { fetchUsers(); }, []);
 
   const handleCreateUser = async () => {
-    if (!newEmail || newPassword.length < 6) {
+    if (!newEmail || createPassword.length < 6) {
       toast.error('Preencha e-mail e senha (mín. 6 caracteres)');
       return;
     }
     setNewUserLoading(true);
-    const data = await callAdminFn({ action: 'create_user', email: newEmail, password: newPassword });
+    const data = await callAdminFn({ action: 'create_user', email: newEmail, password: createPassword });
     setNewUserLoading(false);
     if (data.error) {
       toast.error('Erro ao criar usuário', { description: data.error });
@@ -88,7 +88,7 @@ export default function AdminUsers() {
       toast.success('Usuário criado com sucesso!');
       setNewUserDialog(false);
       setNewEmail('');
-      setNewPassword('');
+      setCreatePassword('');
       fetchUsers();
     }
   };
@@ -161,7 +161,7 @@ export default function AdminUsers() {
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Atualizar
             </Button>
-            <Button size="sm" className="gap-2" onClick={() => { setNewEmail(''); setNewPassword(''); setNewUserDialog(true); }}>
+            <Button size="sm" className="gap-2" onClick={() => { setNewEmail(''); setCreatePassword(''); setNewUserDialog(true); }}>
               <UserPlus className="h-4 w-4" />
               Novo usuário
             </Button>
@@ -298,8 +298,8 @@ export default function AdminUsers() {
               <Input
                 type="password"
                 placeholder="mínimo 6 caracteres"
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
+                value={createPassword}
+                onChange={e => setCreatePassword(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleCreateUser()}
               />
             </div>
