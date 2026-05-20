@@ -54,6 +54,7 @@ export default function AdminUsers() {
   const [pwDialog, setPwDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AuthUser | null>(null);
   const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
 
   // Dialog link de recuperação
@@ -233,13 +234,26 @@ export default function AdminUsers() {
             <p className="text-sm text-muted-foreground">{selectedUser?.email}</p>
             <div className="space-y-1">
               <Label>Nova senha</Label>
-              <Input
-                type="password"
-                placeholder="mínimo 6 caracteres"
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()}
-              />
+              <div className="relative">
+                <Input
+                  type={showNewPassword ? 'text' : 'password'}
+                  placeholder="mínimo 6 caracteres"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                  onClick={() => setShowNewPassword(v => !v)}
+                  tabIndex={-1}
+                >
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
           </div>
           <DialogFooter>
