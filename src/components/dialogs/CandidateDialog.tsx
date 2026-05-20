@@ -6,7 +6,7 @@
  import { Checkbox } from '@/components/ui/checkbox';
  import { Candidate, Program } from '@/types';
  import { useData } from '@/context/DataContext';
- import { STATE_NAME_TO_UF, UF_TO_STATE_NAME, STATE_NAMES, CITIES_BY_UF } from '@/data/brazilianLocations';
+ import { useStates, useCities } from '@/hooks/use-locations';
 
  // ── Componente de input com sugestões ──────────────────────────────
  function AutocompleteInput({
@@ -79,6 +79,19 @@
 
  export function CandidateDialog({ open, onOpenChange, candidate }: CandidateDialogProps) {
    const { addCandidate, updateCandidate, candidates } = useData();
+
+   // Estados e cidades do Supabase
+   const { states } = useStates();
+   const stateNames = useMemo(() => states.map(s => s.nome), [states]);
+   const stateNameToUF = useMemo(
+     () => Object.fromEntries(states.map(s => [s.nome, s.uf])),
+     [states]
+   );
+   const ufToStateName = useMemo(
+     () => Object.fromEntries(states.map(s => [s.uf, s.nome])),
+     [states]
+   );
+
    const [formData, setFormData] = useState({
      name: '',
      city: '',
@@ -96,27 +109,36 @@
          state: candidate.state,
          programs: candidate.programs,
        });
-       setStateDisplay(UF_TO_STATE_NAME[candidate.state] || candidate.state);
+       setStateDisplay(ufToStateName[candidate.state] || candidate.state);
      } else {
        setFormData({ name: '', city: '', state: '', programs: [] });
        setStateDisplay('');
      }
      setStateError(false);
+   // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [candidate, open]);
 
+   // Atualiza o display quando estados carregam (caso o diálogo abra antes do fetch)
+   useEffect(() => {
+     if (formData.state && ufToStateName[formData.state] && stateDisplay === formData.state) {
+       setStateDisplay(ufToStateName[formData.state]);
+     }
+   }, [ufToStateName]);
+
    // Cidades do estado selecionado
+   const { citiesByUF } = useCities(formData.state ? [formData.state] : []);
    const citySuggestions = useMemo(() => {
      const uf = formData.state;
      if (!uf) return [];
-     const base = CITIES_BY_UF[uf] || [];
+     const base = citiesByUF[uf] ?? [];
      const fromDb = candidates.filter(c => c.state === uf && c.city).map(c => c.city);
      const set = new Set([...base, ...fromDb]);
      return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-   }, [formData.state, candidates]);
+   }, [formData.state, citiesByUF, candidates]);
 
    const handleStateChange = (name: string) => {
      setStateDisplay(name);
-     const uf = STATE_NAME_TO_UF[name] ?? '';
+     const uf = stateNameToUF[name] ?? '';
      setFormData(prev => ({ ...prev, state: uf, city: '' }));
      setStateError(name.trim() !== '' && uf === '');
    };
@@ -167,7 +189,7 @@
                  id="state"
                  value={stateDisplay}
                  onChange={handleStateChange}
-                 options={STATE_NAMES}
+                 options={stateNames}
                  placeholder="Digite ou selecione o estado"
                  required
                  showAllWhenEmpty
@@ -190,6 +212,7 @@
                  options={citySuggestions}
                  placeholder={formData.state ? 'Digite a cidade' : '—'}
                  disabled={!formData.state}
+                 showAllWhenEmpty
                  required
                />
              </div>

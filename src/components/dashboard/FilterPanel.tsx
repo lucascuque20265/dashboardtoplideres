@@ -10,7 +10,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { useData } from '@/context/DataContext';
 import { Program, Status } from '@/types';
 import { getProgramLabel, getStatusLabel } from '@/data/mockData';
-import { CITIES_BY_UF } from '@/data/brazilianLocations';
+import { useStates, useCities } from '@/hooks/use-locations';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -21,18 +21,18 @@ export function FilterPanel() {
   const { filters, setFilters } = useData();
   const [showFilters, setShowFilters] = useState(false);
 
-  // Todos os estados disponíveis (UFs) ordenados
-  const availableStates = useMemo(() => Object.keys(CITIES_BY_UF).sort(), []);
+  const { states } = useStates();
+  const availableStates = useMemo(() => states.map(s => s.uf), [states]);
 
-  // Cidades: todas as cidades dos estados selecionados (ou nenhuma se nenhum estado selecionado)
+  const { citiesByUF, loading: citiesLoading } = useCities(filters.states);
   const availableCities = useMemo(() => {
     if (filters.states.length === 0) return [];
     const citySet = new Set<string>();
     filters.states.forEach(uf => {
-      (CITIES_BY_UF[uf] ?? []).forEach(city => citySet.add(city));
+      (citiesByUF[uf] ?? []).forEach(city => citySet.add(city));
     });
     return Array.from(citySet).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  }, [filters.states]);
+  }, [filters.states, citiesByUF]);
 
   const toggleProgram = (program: Program) => {
     const newPrograms = filters.programs.includes(program)
@@ -291,6 +291,8 @@ export function FilterPanel() {
                       <span className="text-xs text-muted-foreground">
                         {filters.states.length === 0
                           ? 'Selecione um estado para ver as cidades'
+                          : citiesLoading
+                          ? 'Carregando cidades...'
                           : 'Nenhuma cidade'}
                       </span>
                     )}
