@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, KeyRound, RefreshCw, Copy, Check, UserPlus } from 'lucide-react';
+import { Users, KeyRound, RefreshCw, Copy, Check, UserPlus, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,7 @@ export default function AdminUsers() {
   const [newUserDialog, setNewUserDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [createPassword, setCreatePassword] = useState('');
+  const [showCreatePassword, setShowCreatePassword] = useState(false);
   const [newUserLoading, setNewUserLoading] = useState(false);
 
   // Dialog alterar senha
@@ -83,7 +84,10 @@ export default function AdminUsers() {
     const data = await callAdminFn({ action: 'create_user', email: newEmail, password: createPassword });
     setNewUserLoading(false);
     if (data.error) {
-      toast.error('Erro ao criar usuário', { description: data.error });
+      const msg = data.error === 'A user with this email address has already been registered'
+        ? 'Este e-mail já está cadastrado'
+        : data.error;
+      toast.error('Erro ao criar usuário', { description: msg });
     } else {
       toast.success('Usuário criado com sucesso!');
       setNewUserDialog(false);
@@ -295,13 +299,26 @@ export default function AdminUsers() {
             </div>
             <div className="space-y-1">
               <Label>Senha inicial</Label>
-              <Input
-                type="password"
-                placeholder="mínimo 6 caracteres"
-                value={createPassword}
-                onChange={e => setCreatePassword(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleCreateUser()}
-              />
+              <div className="relative">
+                <Input
+                  type={showCreatePassword ? 'text' : 'password'}
+                  placeholder="mínimo 6 caracteres"
+                  value={createPassword}
+                  onChange={e => setCreatePassword(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleCreateUser()}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                  onClick={() => setShowCreatePassword(v => !v)}
+                  tabIndex={-1}
+                >
+                  {showCreatePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
           </div>
           <DialogFooter>
