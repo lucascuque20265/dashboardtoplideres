@@ -23,6 +23,15 @@ function ProtectedLayout() {
   return <MainLayout />;
 }
 
+// Rota exclusiva para superadmin
+function SuperAdminRoute() {
+  const { user, authLoading, isSuperAdmin } = useData();
+  if (authLoading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!isSuperAdmin) return <Navigate to="/" replace />;
+  return <AdminUsers />;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <DataProvider>
@@ -37,8 +46,8 @@ const App = () => (
               <Route path="/kanban" element={<Kanban />} />
               <Route path="/candidates" element={<CandidatesList />} />
               <Route path="/candidates/:id" element={<CandidateDetail />} />
-              <Route path="/admin" element={<AdminUsers />} />
             </Route>
+            <Route path="/admin" element={<SuperAdminRoute />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -97,6 +97,7 @@
    user: User | null;
    filters: DashboardFilters;
    isAdmin: boolean;
+   isSuperAdmin: boolean;
    signIn: (email: string, password: string) => Promise<{ error: string | null }>;
    signOut: () => Promise<void>;
    setFilters: (filters: DashboardFilters) => void;
@@ -128,6 +129,7 @@
    });
 
    const isAdmin = !!user;
+   const isSuperAdmin = user?.app_metadata?.superadmin === true;
 
    // Verifica sessão Supabase Auth
    useEffect(() => {
@@ -368,6 +370,7 @@
        user,
        filters,
        isAdmin,
+       isSuperAdmin,
        signIn,
        signOut,
        setFilters,

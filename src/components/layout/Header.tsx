@@ -8,14 +8,14 @@ import { cn } from '@/lib/utils';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, signOut } = useData();
+  const { user, signOut, isSuperAdmin } = useData();
   const location = useLocation();
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/kanban', label: 'Kanban', icon: KanbanSquare },
     { path: '/candidates', label: 'Candidatos', icon: Users },
-    { path: '/admin', label: 'Usuários', icon: ShieldCheck },
+    ...(isSuperAdmin ? [{ path: '/admin', label: 'Usuários', icon: ShieldCheck }] : []),
   ];
 
   return (
