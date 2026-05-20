@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, KeyRound, RefreshCw, Copy, Check } from 'lucide-react';
+import { Users, KeyRound, RefreshCw, Copy, Check, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,12 +33,21 @@ async function callAdminFn(body: object) {
     },
     body: JSON.stringify(body),
   });
+  if (!res.ok && res.headers.get('content-type')?.includes('text/html')) {
+    return { error: 'Edge Function não deployada. Veja as instruções no README.' };
+  }
   return res.json();
 }
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Dialog novo usuário
+  const [newUserDialog, setNewUserDialog] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newUserLoading, setNewUserLoading] = useState(false);
 
   // Dialog alterar senha
   const [pwDialog, setPwDialog] = useState(false);
@@ -54,16 +63,35 @@ export default function AdminUsers() {
 
   const fetchUsers = async () => {
     setLoading(true);
-    const data = await callAdminFn({ action: 'list_users' });
-    if (data.error) {
-      toast.error('Erro ao listar usuários', { description: data.error });
+    const { data, error } = await supabase.rpc('admin_list_users');
+    if (error) {
+      toast.error('Erro ao listar usuários', { description: error.message });
     } else {
-      setUsers(data.users ?? []);
+      setUsers(data ?? []);
     }
     setLoading(false);
   };
 
   useEffect(() => { fetchUsers(); }, []);
+
+  const handleCreateUser = async () => {
+    if (!newEmail || newPassword.length < 6) {
+      toast.error('Preencha e-mail e senha (mín. 6 caracteres)');
+      return;
+    }
+    setNewUserLoading(true);
+    const data = await callAdminFn({ action: 'create_user', email: newEmail, password: newPassword });
+    setNewUserLoading(false);
+    if (data.error) {
+      toast.error('Erro ao criar usuário', { description: data.error });
+    } else {
+      toast.success('Usuário criado com sucesso!');
+      setNewUserDialog(false);
+      setNewEmail('');
+      setNewPassword('');
+      fetchUsers();
+    }
+  };
 
   const openPwDialog = (user: AuthUser) => {
     setSelectedUser(user);
@@ -128,10 +156,16 @@ export default function AdminUsers() {
               <p className="text-sm text-muted-foreground">Altere senhas e gerencie acessos</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-2">
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-2">
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+            <Button size="sm" className="gap-2" onClick={() => { setNewEmail(''); setNewPassword(''); setNewUserDialog(true); }}>
+              <UserPlus className="h-4 w-4" />
+              Novo usuário
+            </Button>
+          </div>
         </div>
       </motion.div>
 
@@ -239,6 +273,42 @@ export default function AdminUsers() {
           </div>
           <DialogFooter>
             <Button onClick={() => setLinkDialog(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: novo usuário */}
+      <Dialog open={newUserDialog} onOpenChange={setNewUserDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Criar novo usuário</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label>E-mail</Label>
+              <Input
+                type="email"
+                placeholder="usuario@exemplo.com"
+                value={newEmail}
+                onChange={e => setNewEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Senha inicial</Label>
+              <Input
+                type="password"
+                placeholder="mínimo 6 caracteres"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleCreateUser()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewUserDialog(false)}>Cancelar</Button>
+            <Button onClick={handleCreateUser} disabled={newUserLoading}>
+              {newUserLoading ? 'Criando...' : 'Criar usuário'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -49,6 +49,21 @@ Deno.serve(async (req) => {
     return Response.json({ success: true }, { headers: corsHeaders })
   }
 
+  // Criar usuário
+  if (action === 'create_user') {
+    const { email, password } = body
+    if (!email || !password) {
+      return Response.json({ error: 'email e password são obrigatórios' }, { status: 400, headers: corsHeaders })
+    }
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    })
+    if (error) return Response.json({ error: error.message }, { status: 400, headers: corsHeaders })
+    return Response.json({ user: data.user }, { headers: corsHeaders })
+  }
+
   // Gerar link de recuperação de senha (sem enviar e-mail)
   if (action === 'generate_recovery_link') {
     const { email, redirectTo } = body
