@@ -98,6 +98,7 @@
    filters: DashboardFilters;
    isAdmin: boolean;
    signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+   signInWithGoogle: () => Promise<void>;
    signOut: () => Promise<void>;
    setFilters: (filters: DashboardFilters) => void;
    addCandidate: (candidate: Omit<Candidate, 'id' | 'productsServices'>) => void;
@@ -163,6 +164,13 @@
    const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
      const { error } = await supabase.auth.signInWithPassword({ email, password });
      return { error: error?.message ?? null };
+   };
+
+   const signInWithGoogle = async () => {
+     await supabase.auth.signInWithOAuth({
+       provider: 'google',
+       options: { redirectTo: window.location.origin },
+     });
    };
 
    const signOut = async () => {
@@ -369,6 +377,7 @@
        filters,
        isAdmin,
        signIn,
+       signInWithGoogle,
        signOut,
        setFilters,
        addCandidate,
