@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Users, Menu, X, KanbanSquare, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Menu, X, KanbanSquare, ShieldCheck, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useData } from '@/context/DataContext';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,7 @@ export function Header() {
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/kanban', label: 'Kanban', icon: KanbanSquare },
     { path: '/candidates', label: 'Candidatos', icon: Users },
+    { path: '/admin', label: 'Usuários', icon: ShieldCheck },
   ];
 
   return (

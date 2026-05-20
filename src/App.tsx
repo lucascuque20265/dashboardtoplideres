@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import CandidatesList from "./pages/CandidatesList";
 import CandidateDetail from "./pages/CandidateDetail";
 import Kanban from "./pages/Kanban";
+import AdminUsers from "./pages/AdminUsers";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/kanban" element={<Kanban />} />
               <Route path="/candidates" element={<CandidatesList />} />
               <Route path="/candidates/:id" element={<CandidateDetail />} />
+              <Route path="/admin" element={<AdminUsers />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
