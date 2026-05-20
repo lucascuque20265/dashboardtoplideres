@@ -28,6 +28,12 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Não autorizado' }, { status: 401, headers: corsHeaders })
   }
 
+  // Verifica se o chamador é superadmin
+  const isSuperAdmin = caller.app_metadata?.superadmin === true
+  if (!isSuperAdmin) {
+    return Response.json({ error: 'Acesso negado' }, { status: 403, headers: corsHeaders })
+  }
+
   const body = await req.json()
   const { action } = body
 
