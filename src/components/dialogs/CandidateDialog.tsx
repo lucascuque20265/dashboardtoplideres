@@ -6,61 +6,11 @@
  import { Checkbox } from '@/components/ui/checkbox';
  import { Candidate, Program } from '@/types';
  import { useData } from '@/context/DataContext';
-
- // ── Dados brasileiros ─────────────────────────────────────────────
- const STATE_NAME_TO_UF: Record<string, string> = {
-   'Acre': 'AC', 'Alagoas': 'AL', 'Amazonas': 'AM', 'Amapá': 'AP',
-   'Bahia': 'BA', 'Ceará': 'CE', 'Distrito Federal': 'DF', 'Espírito Santo': 'ES',
-   'Goiás': 'GO', 'Maranhão': 'MA', 'Minas Gerais': 'MG', 'Mato Grosso do Sul': 'MS',
-   'Mato Grosso': 'MT', 'Pará': 'PA', 'Paraíba': 'PB', 'Pernambuco': 'PE',
-   'Piauí': 'PI', 'Paraná': 'PR', 'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN',
-   'Rondônia': 'RO', 'Roraima': 'RR', 'Rio Grande do Sul': 'RS', 'Santa Catarina': 'SC',
-   'Sergipe': 'SE', 'São Paulo': 'SP', 'Tocantins': 'TO',
- };
-
- const UF_TO_STATE_NAME: Record<string, string> = Object.fromEntries(
-   Object.entries(STATE_NAME_TO_UF).map(([name, uf]) => [uf, name])
- );
-
- const STATE_NAMES = Object.keys(STATE_NAME_TO_UF).sort((a, b) =>
-   a.localeCompare(b, 'pt-BR')
- );
-
- const BASE_CITIES_BY_UF: Record<string, string[]> = {
-   AC: ['Rio Branco', 'Cruzeiro do Sul'],
-   AL: ['Maceió', 'Arapiraca'],
-   AM: ['Manaus', 'Parintins'],
-   AP: ['Macapá', 'Santana'],
-   BA: ['Salvador', 'Feira de Santana', 'Vitória da Conquista', 'Camaçari'],
-   CE: ['Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Maracanaú', 'Sobral'],
-   DF: ['Brasília', 'Ceilândia', 'Taguatinga'],
-   ES: ['Vitória', 'Vila Velha', 'Cariacica', 'Serra'],
-   GO: ['Goiânia', 'Aparecida de Goiânia', 'Anápolis', 'Rio Verde'],
-   MA: ['São Luís', 'Imperatriz', 'Timon'],
-   MG: ['Belo Horizonte', 'Uberlândia', 'Contagem', 'Betim', 'Juiz de Fora', 'Montes Claros'],
-   MS: ['Campo Grande', 'Dourados', 'Três Lagoas'],
-   MT: ['Cuiabá', 'Várzea Grande', 'Rondonópolis'],
-   PA: ['Belém', 'Ananindeua', 'Santarém', 'Marabá'],
-   PB: ['João Pessoa', 'Campina Grande', 'Santa Rita'],
-   PE: ['Recife', 'Caruaru', 'Olinda', 'Petrolina'],
-   PI: ['Teresina', 'Parnaíba'],
-   PR: ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Foz do Iguaçu', 'Cascavel'],
-   RJ: ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói'],
-   RN: ['Natal', 'Mossoró', 'Parnamirim'],
-   RO: ['Porto Velho', 'Ji-Paraná'],
-   RR: ['Boa Vista'],
-   RS: ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Canoas', 'Gravataí', 'Sapiranga', 'Novo Hamburgo'],
-   SC: ['Florianópolis', 'Joinville', 'Blumenau', 'Palhoça', 'Chapecó', 'Itajaí'],
-   SE: ['Aracaju', 'Nossa Senhora do Socorro'],
-   SP: ['São Paulo', 'Campinas', 'Guarulhos', 'Santos', 'Ribeirão Preto', 'Sorocaba', 'São José dos Campos',
-       'Osasco', 'Carapicuíba', 'Cotia', 'Guarujá', 'Jacareí', 'Jaú', 'Jundiaí', 'Mogi das Cruzes',
-       'Praia Grande', 'Sertãozinho', 'São Vicente', 'Bauru', 'Santo André', 'Piracicaba'],
-   TO: ['Palmas', 'Araguaína'],
- };
+ import { STATE_NAME_TO_UF, UF_TO_STATE_NAME, STATE_NAMES, CITIES_BY_UF } from '@/data/brazilianLocations';
 
  // ── Componente de input com sugestões ──────────────────────────────
  function AutocompleteInput({
-   id, value, onChange, options, placeholder, required, disabled,
+   id, value, onChange, options, placeholder, required, disabled, showAllWhenEmpty,
  }: {
    id: string;
    value: string;
@@ -69,6 +19,7 @@
    placeholder?: string;
    required?: boolean;
    disabled?: boolean;
+   showAllWhenEmpty?: boolean;
  }) {
    const [open, setOpen] = useState(false);
    const ref = useRef<HTMLDivElement>(null);
@@ -76,9 +27,9 @@
    const filtered = useMemo(() => {
      if (disabled) return [];
      const q = value.trim().toLowerCase();
-     if (!q) return options.slice(0, 10);
+     if (!q) return showAllWhenEmpty ? options : options.slice(0, 10);
      return options.filter(o => o.toLowerCase().includes(q) && o.toLowerCase() !== q);
-   }, [value, options, disabled]);
+   }, [value, options, disabled, showAllWhenEmpty]);
 
    useEffect(() => {
      function onMouseDown(e: MouseEvent) {
@@ -157,7 +108,7 @@
    const citySuggestions = useMemo(() => {
      const uf = formData.state;
      if (!uf) return [];
-     const base = BASE_CITIES_BY_UF[uf] || [];
+     const base = CITIES_BY_UF[uf] || [];
      const fromDb = candidates.filter(c => c.state === uf && c.city).map(c => c.city);
      const set = new Set([...base, ...fromDb]);
      return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
@@ -217,8 +168,9 @@
                  value={stateDisplay}
                  onChange={handleStateChange}
                  options={STATE_NAMES}
-                 placeholder="Digite o nome do estado"
+                 placeholder="Digite ou selecione o estado"
                  required
+                 showAllWhenEmpty
                />
                {stateError && (
                  <p className="text-xs text-destructive">Selecione um estado válido da lista</p>
