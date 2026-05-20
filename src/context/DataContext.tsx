@@ -2,6 +2,7 @@
  import { Candidate, ProductService, Demand, Program, Status, DashboardFilters } from '@/types';
  import { supabase } from '@/lib/supabase';
  import { toast } from 'sonner';
+ import type { User } from '@supabase/supabase-js';
  
  // ── Tipos das linhas do banco (snake_case) ──────────────────────────
  interface DBDemand {
@@ -92,9 +93,12 @@
  interface DataContextType {
    candidates: Candidate[];
    isLoading: boolean;
+   authLoading: boolean;
+   user: User | null;
    filters: DashboardFilters;
    isAdmin: boolean;
-   setIsAdmin: (value: boolean) => void;
+   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+   signOut: () => Promise<void>;
    setFilters: (filters: DashboardFilters) => void;
    addCandidate: (candidate: Omit<Candidate, 'id' | 'productsServices'>) => void;
    updateCandidate: (id: string, data: Partial<Candidate>) => void;
@@ -111,11 +115,9 @@
  
  export function DataProvider({ children }: { children: React.ReactNode }) {
    const [candidates, setCandidates] = useState<Candidate[]>([]);
-   const [isLoading, setIsLoading] = useState(true);
-   const [isAdmin, setIsAdminState] = useState(() => {
-     const saved = localStorage.getItem('isAdmin');
-     return saved === 'true';
-   });
+   const [isLoading, setIsLoading] = useState(false);
+   const [user, setUser] = useState<User | null>(null);
+   const [authLoading, setAuthLoading] = useState(true);
    const [filters, setFilters] = useState<DashboardFilters>({
      programs: [],
      status: [],
@@ -124,9 +126,29 @@
      cities: [],
      states: [],
    });
- 
-   // Carga inicial dos dados
+
+   const isAdmin = !!user;
+
+   // Verifica sessão Supabase Auth
    useEffect(() => {
+     supabase.auth.getSession().then(({ data: { session } }) => {
+       setUser(session?.user ?? null);
+       setAuthLoading(false);
+     });
+     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+       setUser(session?.user ?? null);
+     });
+     return () => subscription.unsubscribe();
+   }, []);
+
+   // Carrega dados quando o usuário autentica
+   useEffect(() => {
+     if (!user) {
+       setCandidates([]);
+       setIsLoading(false);
+       return;
+     }
+     setIsLoading(true);
      fetchAllCandidates()
        .then(setCandidates)
        .catch(() => {
@@ -135,15 +157,16 @@
          });
        })
        .finally(() => setIsLoading(false));
-   }, []);
- 
-   const setIsAdmin = (value: boolean) => {
-     setIsAdminState(value);
-     if (value) {
-       localStorage.setItem('isAdmin', 'true');
-     } else {
-       localStorage.removeItem('isAdmin');
-     }
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [user?.id]);
+
+   const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
+     const { error } = await supabase.auth.signInWithPassword({ email, password });
+     return { error: error?.message ?? null };
+   };
+
+   const signOut = async () => {
+     await supabase.auth.signOut();
    };
  
    // ── Candidatos ──────────────────────────────────────────────────
@@ -341,9 +364,12 @@
      <DataContext.Provider value={{
        candidates,
        isLoading,
+       authLoading,
+       user,
        filters,
        isAdmin,
-       setIsAdmin,
+       signIn,
+       signOut,
        setFilters,
        addCandidate,
        updateCandidate,
@@ -355,7 +381,7 @@
        updateDemand,
        deleteDemand,
      }}>
-       {isLoading ? (
+       {(authLoading || isLoading) ? (
          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background">
            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4" />
            <p className="text-muted-foreground text-sm">Carregando dados...</p>

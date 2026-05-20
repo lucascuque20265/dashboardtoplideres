@@ -1,22 +1,21 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Users, Menu, X, Shield, ShieldOff, KanbanSquare } from 'lucide-react';
+import { LayoutDashboard, Users, Menu, X, KanbanSquare, History, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AdminPasswordDialog } from '@/components/dialogs/AdminPasswordDialog';
 import { useData } from '@/context/DataContext';
 import { cn } from '@/lib/utils';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const { isAdmin, setIsAdmin } = useData();
+  const { user, signOut } = useData();
   const location = useLocation();
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/kanban', label: 'Kanban', icon: KanbanSquare },
     { path: '/candidates', label: 'Candidatos', icon: Users },
+    { path: '/audit', label: 'Auditoria', icon: History },
   ];
 
   return (
@@ -54,15 +53,22 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant={isAdmin ? "default" : "outline"}
-            size="sm"
-            onClick={() => setPasswordDialogOpen(true)}
-            className="gap-2"
-          >
-            {isAdmin ? <Shield className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
-            <span className="hidden sm:inline">{isAdmin ? 'Admin' : 'Visualizar'}</span>
-          </Button>
+          {user && (
+            <>
+              <span className="hidden sm:inline text-xs text-muted-foreground max-w-[160px] truncate">
+                {user.email}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut()}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Sair</span>
+              </Button>
+            </>
+          )}
 
           {/* Mobile Menu Toggle */}
           <Button
@@ -108,12 +114,6 @@ export function Header() {
         </motion.nav>
       )}
 
-      <AdminPasswordDialog
-        open={passwordDialogOpen}
-        onOpenChange={setPasswordDialogOpen}
-        onSuccess={() => setIsAdmin(!isAdmin)}
-        isLoggingOut={isAdmin}
-      />
     </header>
   );
 }
