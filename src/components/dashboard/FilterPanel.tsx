@@ -10,6 +10,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { useData } from '@/context/DataContext';
 import { Program, Status } from '@/types';
 import { getProgramLabel, getStatusLabel } from '@/data/mockData';
+import { CITIES_BY_UF } from '@/data/brazilianLocations';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -17,34 +18,21 @@ const programs: Program[] = ['TL', 'TE', 'TM', 'TA'];
 const statuses: Status[] = ['not_started', 'in_progress', 'completed'];
 
 export function FilterPanel() {
-  const { filters, setFilters, candidates } = useData();
+  const { filters, setFilters } = useData();
   const [showFilters, setShowFilters] = useState(false);
 
-  // Cidades e estados únicos derivados dos candidatos atuais
-  const { availableCities, availableStates } = useMemo(() => {
+  // Todos os estados disponíveis (UFs) ordenados
+  const availableStates = useMemo(() => Object.keys(CITIES_BY_UF).sort(), []);
+
+  // Cidades: todas as cidades dos estados selecionados (ou nenhuma se nenhum estado selecionado)
+  const availableCities = useMemo(() => {
+    if (filters.states.length === 0) return [];
     const citySet = new Set<string>();
-    const stateSet = new Set<string>();
-    candidates.forEach(c => {
-      if (c.city) citySet.add(c.city);
-      if (c.state) stateSet.add(c.state);
+    filters.states.forEach(uf => {
+      (CITIES_BY_UF[uf] ?? []).forEach(city => citySet.add(city));
     });
-
-    // Se há estados selecionados, mostrar apenas cidades desses estados
-    let filteredCitySet = citySet;
-    if (filters.states.length > 0) {
-      filteredCitySet = new Set<string>();
-      candidates.forEach(c => {
-        if (filters.states.includes(c.state) && c.city) {
-          filteredCitySet.add(c.city);
-        }
-      });
-    }
-
-    return {
-      availableCities: Array.from(filteredCitySet).sort((a, b) => a.localeCompare(b, 'pt-BR')),
-      availableStates: Array.from(stateSet).sort(),
-    };
-  }, [candidates, filters.states]);
+    return Array.from(citySet).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }, [filters.states]);
 
   const toggleProgram = (program: Program) => {
     const newPrograms = filters.programs.includes(program)
@@ -300,7 +288,11 @@ export function FilterPanel() {
                       </Button>
                     ))}
                     {availableCities.length === 0 && (
-                      <span className="text-xs text-muted-foreground">Nenhuma cidade</span>
+                      <span className="text-xs text-muted-foreground">
+                        {filters.states.length === 0
+                          ? 'Selecione um estado para ver as cidades'
+                          : 'Nenhuma cidade'}
+                      </span>
                     )}
                   </div>
                 </div>
