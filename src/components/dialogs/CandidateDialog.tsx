@@ -100,6 +100,7 @@
    });
    const [stateDisplay, setStateDisplay] = useState('');
    const [stateError, setStateError] = useState(false);
+   const [programsError, setProgramsError] = useState(false);
 
    useEffect(() => {
      if (candidate) {
@@ -115,6 +116,7 @@
        setStateDisplay('');
      }
      setStateError(false);
+     setProgramsError(false);
    // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [candidate, open]);
 
@@ -145,10 +147,16 @@
 
    const handleSubmit = (e: React.FormEvent) => {
      e.preventDefault();
+     let valid = true;
      if (!formData.state) {
        setStateError(true);
-       return;
+       valid = false;
      }
+     if (formData.programs.length === 0) {
+       setProgramsError(true);
+       valid = false;
+     }
+     if (!valid) return;
      if (candidate) {
        updateCandidate(candidate.id, formData);
      } else {
@@ -158,12 +166,13 @@
    };
 
    const toggleProgram = (program: Program) => {
-     setFormData(prev => ({
-       ...prev,
-       programs: prev.programs.includes(program)
+     setFormData(prev => {
+       const next = prev.programs.includes(program)
          ? prev.programs.filter(p => p !== program)
-         : [...prev.programs, program],
-     }));
+         : [...prev.programs, program];
+       if (next.length > 0) setProgramsError(false);
+       return { ...prev, programs: next };
+     });
    };
 
    return (
@@ -217,7 +226,10 @@
                />
              </div>
              <div className="space-y-2">
-               <Label>Programas</Label>
+               <Label>
+                 Programas
+                 <span className="ml-1 text-destructive">*</span>
+               </Label>
                <div className="flex flex-wrap gap-4">
                  {programs.map(program => (
                    <div key={program} className="flex items-center space-x-2">
@@ -235,6 +247,9 @@
                    </div>
                  ))}
                </div>
+               {programsError && (
+                 <p className="text-xs text-destructive">Selecione pelo menos um programa</p>
+               )}
              </div>
            </div>
            <DialogFooter>
