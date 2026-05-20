@@ -4,6 +4,16 @@
  import { Card, CardContent, CardHeader } from '@/components/ui/card';
  import { Badge } from '@/components/ui/badge';
  import { Button } from '@/components/ui/button';
+ import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+ } from '@/components/ui/alert-dialog';
  import { ProductService, Status } from '@/types';
  import { getStatusLabel } from '@/data/mockData';
  import { format } from 'date-fns';
@@ -28,6 +38,7 @@
  
  export function ProductServiceCard({ product, candidateId, onEdit, onAddDemand, onEditDemand }: ProductServiceCardProps) {
    const [expanded, setExpanded] = useState(false);
+   const [confirmOpen, setConfirmOpen] = useState(false);
    const { isAdmin, deleteProductService } = useData();
  
    const completedDemands = product.demands.filter(d => d.status === 'completed').length;
@@ -82,10 +93,29 @@
                      variant="ghost"
                      size="icon"
                      className="h-8 w-8 text-destructive hover:text-destructive"
-                     onClick={(e) => { e.stopPropagation(); deleteProductService(candidateId, product.id); }}
+                     onClick={(e) => { e.stopPropagation(); setConfirmOpen(true); }}
                    >
                      <Trash2 className="h-4 w-4" />
                    </Button>
+                   <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                     <AlertDialogContent>
+                       <AlertDialogHeader>
+                         <AlertDialogTitle>Excluir produto/serviço?</AlertDialogTitle>
+                         <AlertDialogDescription>
+                           Esta ação não pode ser desfeita. O item <strong>{product.name}</strong> e todas as suas demandas serão removidos permanentemente.
+                         </AlertDialogDescription>
+                       </AlertDialogHeader>
+                       <AlertDialogFooter>
+                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                         <AlertDialogAction
+                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                           onClick={() => deleteProductService(candidateId, product.id)}
+                         >
+                           Sim, excluir
+                         </AlertDialogAction>
+                       </AlertDialogFooter>
+                     </AlertDialogContent>
+                   </AlertDialog>
                  </>
                )}
                {expanded ? (

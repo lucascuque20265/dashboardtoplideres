@@ -19,6 +19,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { ProductServiceCard } from '@/components/candidates/ProductServiceCard';
 import { CandidateDialog } from '@/components/dialogs/CandidateDialog';
 import { ProductServiceDialog } from '@/components/dialogs/ProductServiceDialog';
@@ -104,10 +115,8 @@ export default function CandidateDetail() {
   }
 
   const handleDeleteCandidate = () => {
-    if (confirm('Tem certeza que deseja excluir este candidato?')) {
-      deleteCandidate(candidate.id);
-      navigate('/candidates');
-    }
+    deleteCandidate(candidate.id);
+    navigate('/candidates');
   };
 
   const handleEditProduct = (product: ProductService) => {
@@ -175,10 +184,31 @@ export default function CandidateDetail() {
                   <Pencil className="h-4 w-4" />
                   <span className="hidden sm:inline">Editar</span>
                 </Button>
-                <Button variant="destructive" onClick={handleDeleteCandidate} className="gap-2">
-                  <Trash2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Excluir</span>
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="gap-2">
+                      <Trash2 className="h-4 w-4" />
+                      <span className="hidden sm:inline">Excluir</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir candidato?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta ação não pode ser desfeita. O candidato <strong>{candidate.name}</strong> e todos os seus dados serão removidos permanentemente.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={handleDeleteCandidate}
+                      >
+                        Sim, excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </>
             )}
           </div>

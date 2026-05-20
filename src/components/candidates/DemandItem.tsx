@@ -1,6 +1,17 @@
+ import { useState } from 'react';
  import { Calendar, ExternalLink, Pencil, Trash2 } from 'lucide-react';
  import { Badge } from '@/components/ui/badge';
  import { Button } from '@/components/ui/button';
+ import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+ } from '@/components/ui/alert-dialog';
  import { Demand, Status } from '@/types';
  import { getStatusLabel } from '@/data/mockData';
  import { format } from 'date-fns';
@@ -23,6 +34,7 @@
  
  export function DemandItem({ demand, candidateId, productId, onEdit }: DemandItemProps) {
    const { isAdmin, deleteDemand } = useData();
+   const [confirmOpen, setConfirmOpen] = useState(false);
  
    return (
      <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
@@ -74,10 +86,29 @@
              variant="ghost"
              size="icon"
              className="h-7 w-7 text-destructive hover:text-destructive"
-             onClick={() => deleteDemand(candidateId, productId, demand.id)}
+             onClick={() => setConfirmOpen(true)}
            >
              <Trash2 className="h-3 w-3" />
            </Button>
+           <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+             <AlertDialogContent>
+               <AlertDialogHeader>
+                 <AlertDialogTitle>Excluir demanda?</AlertDialogTitle>
+                 <AlertDialogDescription>
+                   Esta ação não pode ser desfeita. A demanda <strong>{demand.description}</strong> será removida permanentemente.
+                 </AlertDialogDescription>
+               </AlertDialogHeader>
+               <AlertDialogFooter>
+                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                 <AlertDialogAction
+                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                   onClick={() => deleteDemand(candidateId, productId, demand.id)}
+                 >
+                   Sim, excluir
+                 </AlertDialogAction>
+               </AlertDialogFooter>
+             </AlertDialogContent>
+           </AlertDialog>
          </div>
        )}
      </div>
